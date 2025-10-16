@@ -53,12 +53,12 @@ class AutoTotem {
     this.bot = bot;
     this.lowHealthThreshold = 10;
     this.offhandSlot = 45;
-    this.totemType = 1163;
   }
 
   start() {
     this.bot.on('health', () => this.handleAutoTotem());
     setInterval(() => this.handleAutoTotem(), 100);
+    console.log('AutoTotem started. Will equip totem when health drops below', this.lowHealthThreshold);
   }
 
   handleAutoTotem() {
@@ -67,25 +67,83 @@ class AutoTotem {
     }
   }
 
-  equipTotem() {
-    const totemSlot = this.findTotemInInventory();
-    if (totemSlot !== -1) {
-      const item = this.bot.inventory.slots[totemSlot];
-      this.bot.equip(item, 'off-hand', (err) => {
-        if (err) console.error('Error equipping totem:', err);
-      });
+  async equipTotem() {
+    const totemItem = this.findTotemInInventory();
+    if (totemItem) {
+      try {
+        await this.bot.equip(totemItem, 'off-hand');
+        console.log('Totem equipped to off-hand');
+      } catch (err) {
+        console.error('Error equipping totem:', err);
+      }
+    } else {
+      console.log('No totem found in inventory');
     }
   }
 
   findTotemInInventory() {
     for (let i = 0; i < this.bot.inventory.slots.length; i++) {
       const item = this.bot.inventory.slots[i];
-      if (item && item.type === this.totemType) {
-        return i;
+      if (item && item.name === 'totem_of_undying') {
+        return item;
       }
     }
-    return -1;
+    return null;
   }
 }
 
-module.exports = { Food, AutoTotem };
+// BotDeath class to handle death tracking and logging
+class BotDeath {
+  constructor(bot) {
+    this.bot = bot;
+    this.setupDeathHandler();
+  }
+
+  getKillerWeapon(killer) {
+    const heldItem = killer.heldItem;
+    return heldItem ? heldItem.name : 'unknown weapon';
+  }
+
+  setupDeathHandler() {
+    this.bot.on('death', () => {
+      const now = new Date();
+      const localTime = now.toLocaleString();
+
+      // Get death location
+      const position = this.bot.entity.position;
+      const location = `X: ${Math.floor(position.x)}, Y: ${Math.floor(position.y)}, Z: ${Math.floor(position.z)}`;
+
+      // Check for player killer
+      const playerKiller = Object.values(this.bot.entities).find(
+        (entity) => entity.type === 'player' && entity !== this.bot.entity
+      );
+
+      // Check for mob killer
+      const mobKiller = Object.values(this.bot.entities).find(
+        (entity) => entity.type === 'mob' && entity.position.distanceTo(this.bot.entity.position) < 10
+      );
+
+      let deathMessage = `The bot has died at ${localTime} at location: ${location}.`;
+
+      if (playerKiller) {
+        const killerWeapon = this.getKillerWeapon(playerKiller);
+        deathMessage += ` Killed by player: ${playerKiller.username} using ${killerWeapon}.`;
+      } else if (mobKiller) {
+        const mobName = mobKiller.name || mobKiller.displayName || 'unknown mob';
+        deathMessage += ` Killed by mob: ${mobName}.`;
+      } else {
+        deathMessage += ' Killed by: environmental damage or unknown cause.';
+      }
+
+      console.log('Death details:', deathMessage);
+
+      try {
+        fs.appendFileSync('death.txt', `[${localTime}] ${deathMessage}\n`);
+      } catch (err) {
+        console.error('Error writing to death.txt:', err);
+      }
+    });
+  }
+}
+
+module.exports = { Food, AutoTotem, BotDeath };
