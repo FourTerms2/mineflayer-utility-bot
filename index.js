@@ -58,7 +58,6 @@ class AutoTotem {
   start() {
     this.bot.on('health', () => this.handleAutoTotem());
     setInterval(() => this.handleAutoTotem(), 100);
-    console.log('AutoTotem started. Will equip totem when health drops below', this.lowHealthThreshold);
   }
 
   handleAutoTotem() {
@@ -72,12 +71,10 @@ class AutoTotem {
     if (totemItem) {
       try {
         await this.bot.equip(totemItem, 'off-hand');
-        console.log('Totem equipped to off-hand');
       } catch (err) {
         console.error('Error equipping totem:', err);
       }
     } else {
-      console.log('No totem found in inventory');
     }
   }
 

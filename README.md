@@ -4,6 +4,11 @@ A comprehensive Mineflayer utility package that combines automatic eating, totem
 
 **GitHub Repository:** https://github.com/FourTerms2/mineflayer-utility-bot
 
+## 💬 Discord Community
+
+Join our Discord server for support, updates, and community discussions. For faster support, please make a ticket:
+https://discord.gg/RMC3PcKrpt
+
 ## Features
 
 ### Auto Eat
@@ -22,6 +27,8 @@ A comprehensive Mineflayer utility package that combines automatic eating, totem
 - Identifies killer (player, mob, or environmental)
 - Logs weapon used by player killers
 - Saves death log to `death.txt` file
+
+
 
 ## Installation
 
